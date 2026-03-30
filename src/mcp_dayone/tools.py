@@ -19,11 +19,30 @@ class DayOneError(Exception):
 class DayOneTools:
     """Wrapper for Day One CLI operations."""
     
-    def __init__(self, cli_path: str = "dayone2"):
-        self.cli_path = cli_path
+    def __init__(self, cli_path: str | None = None):
+        self.cli_path = cli_path or self._find_cli()
         self._verify_cli()
         self.db_path = self._get_db_path()
-    
+
+    @staticmethod
+    def _find_cli() -> str:
+        """Find the Day One CLI, trying 'dayone' first then 'dayone2'."""
+        for name in ("dayone", "dayone2"):
+            try:
+                subprocess.run(
+                    [name, "--version"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                return name
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                continue
+        raise DayOneError(
+            "Day One CLI not found. Tried 'dayone' and 'dayone2'. "
+            "Install via: sudo bash /Applications/Day\\ One.app/Contents/Resources/install_cli.sh"
+        )
+
     def _verify_cli(self) -> None:
         """Verify Day One CLI is available."""
         try:
